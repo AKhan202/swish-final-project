@@ -2,28 +2,26 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'your-docker-registry'
-        KUBE_NAMESPACE = 'your-kubernetes-namespace'
-        KUBE_SERVER = 'your-kubernetes-server'
-        KUBE_CREDENTIALS = 'your-kube-config-credentials' // Kubernetes credentials in Jenkins credentials store
+        // Define environment variables used throughout the pipeline
+        REGISTRY_URL = 'your-docker-registry.com'  // Replace with your Docker registry URL
+        APP_NAME = 'your-app'
+        KUBE_CONFIG = credentials('kubeconfig')  // Jenkins credentials for Kubernetes config
     }
 
     stages {
-        stage('Build') {
+        stage('Build and Push Docker Images') {
             steps {
                 script {
-                    // Clone the repository
-                    checkout scm
+                    // Build and push Node.js image
+                    docker.build("nodejs-image:${BUILD_NUMBER}", "-f Dockerfile.nodejs .")
+                    docker.withRegistry(REGISTRY_URL, 'docker-credentials-id') {
+                        docker.image("nodejs-image:${BUILD_NUMBER}").push()
+                    }
 
-                    // Determine which Dockerfile to use based on user input
-                    def dockerfile = 'Dockerfile.nodejs' // Example, replace with actual logic
-
-                    // Build Docker image
-                    docker.build("${DOCKER_REGISTRY}/your-app:${env.BUILD_NUMBER}", "-f ${dockerfile} .")
-
-                    // Push Docker image to registry
-                    docker.withRegistry('https://${DOCKER_REGISTRY}', 'docker-credentials-id') {
-                        docker.image("${DOCKER_REGISTRY}/your-app:${env.BUILD_NUMBER}").push()
+                    // Build and push Python image
+                    docker.build("python-image:${BUILD_NUMBER}", "-f Dockerfile.python .")
+                    docker.withRegistry(REGISTRY_URL, 'docker-credentials-id') {
+                        docker.image("python-image:${BUILD_NUMBER}").push()
                     }
                 }
             }
@@ -32,14 +30,43 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // Load Kubernetes credentials
-                    withCredentials([kubeconfig(credentialsId: "${KUBE_CREDENTIALS}", disableVersionCheck: true)]) {
-                        // Apply Kubernetes deployment and service YAML files
-                        sh "kubectl --kubeconfig=${KUBE_SERVER} apply -f kubernetes/deployment.yaml -n ${KUBE_NAMESPACE}"
-                        sh "kubectl --kubeconfig=${KUBE_SERVER} apply -f kubernetes/service.yaml -n ${KUBE_NAMESPACE}"
-                    }
+                    // Deploy Node.js application
+                    sh "kubectl apply -f kubernetes/deployment.yaml --kubeconfig=${KUBE_CONFIG}"
+                    sh "kubectl apply -f kubernetes/service.yaml --kubeconfig=${KUBE_CONFIG}"
+
+                    // Deploy Python application (if applicable)
+                    // sh "kubectl apply -f kubernetes/python-deployment.yaml --kubeconfig=${KUBE_CONFIG}"
+                    // sh "kubectl apply -f kubernetes/python-service.yaml --kubeconfig=${KUBE_CONFIG}"
                 }
             }
+        }
+
+        stage('Deploy UI Changes') {
+            steps {
+                // Example: Copy UI files to web server directory (if needed)
+                sh "cp -r ui/* /var/www/html"
+            }
+        }
+
+        stage('Cleanup') {
+            steps {
+                // Clean up old Docker images or other resources if necessary
+                script {
+                    docker.image("nodejs-image:${BUILD_NUMBER}").remove()
+                    docker.image("python-image:${BUILD_NUMBER}").remove()
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment successful!'
+            // Optionally, trigger notifications or further actions upon successful deployment
+        }
+        failure {
+            echo 'Deployment failed!'
+            // Optionally, trigger notifications or rollback actions upon deployment failure
         }
     }
 }
