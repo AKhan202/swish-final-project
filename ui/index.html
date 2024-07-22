@@ -1,1 +1,53 @@
-#index.html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Development Environment Selector</title>
+</head>
+<body>
+    <h2>Select Your Development Environment</h2>
+    <form id="environmentForm">
+        <label for="baseImage">Base Image:</label>
+        <select id="baseImage" name="baseImage">
+            <option value="nodejs">Node.js</option>
+            <option value="python">Python</option>
+        </select><br><br>
+
+        <label for="packages">Packages:</label>
+        <input type="text" id="packages" name="packages"><br><br>
+
+        <label for="cpu">CPU (requests):</label>
+        <input type="text" id="cpu" name="cpu"><br><br>
+
+        <label for="memory">Memory (requests):</label>
+        <input type="text" id="memory" name="memory"><br><br>
+
+        <button type="button" onclick="submitForm()">Launch Environment</button>
+    </form>
+
+    <script>
+        function submitForm() {
+            var form = document.getElementById('environmentForm');
+            var formData = new FormData(form);
+
+            fetch('https://your-jenkins-server/job/your-job-name/build', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Build started:', data);
+                alert('Build started. Check Jenkins for progress.');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error starting build. Please try again.');
+            });
+        }
+    </script>
+</body>
+</html>
