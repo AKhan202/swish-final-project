@@ -2,9 +2,7 @@ pipeline {
     agent any
 
     environment {
-        // Define environment variables used throughout the pipeline
         REGISTRY_URL = 'your-docker-registry.com'  // Replace with your Docker registry URL
-        APP_NAME = 'your-app'
         KUBE_CONFIG = credentials('kubeconfig')  // Jenkins credentials for Kubernetes config
     }
 
@@ -33,10 +31,30 @@ pipeline {
                     // Deploy Node.js application
                     sh "kubectl apply -f kubernetes/deployment.yaml --kubeconfig=${KUBE_CONFIG}"
                     sh "kubectl apply -f kubernetes/service.yaml --kubeconfig=${KUBE_CONFIG}"
+                }
+            }
+        }
 
-                    // Deploy Python application (if applicable)
-                    // sh "kubectl apply -f kubernetes/python-deployment.yaml --kubeconfig=${KUBE_CONFIG}"
-                    // sh "kubectl apply -f kubernetes/python-service.yaml --kubeconfig=${KUBE_CONFIG}"
+        stage('Setup Monitoring') {
+            steps {
+                script {
+                    // Install Prometheus and Grafana using Helm
+                    sh "helm repo add prometheus-community https://prometheus-community.github.io/helm-charts"
+                    sh "helm repo update"
+                    sh "helm install prometheus prometheus-community/kube-prometheus-stack --kubeconfig=${KUBE_CONFIG}"
+
+                    // Optionally, configure Grafana dashboards and alerts
+                    // Example: sh "kubectl apply -f grafana-dashboard.yaml --kubeconfig=${KUBE_CONFIG}"
+                }
+            }
+        }
+
+        stage('Configure Autoscaling') {
+            steps {
+                script {
+                    // Configure Horizontal Pod Autoscaler (HPA)
+                    // Example HPA YAML definition
+                    sh "kubectl apply -f kubernetes/hpa.yaml --kubeconfig=${KUBE_CONFIG}"
                 }
             }
         }
@@ -50,8 +68,8 @@ pipeline {
 
         stage('Cleanup') {
             steps {
-                // Clean up old Docker images or other resources if necessary
                 script {
+                    // Clean up old Docker images or other resources if necessary
                     docker.image("nodejs-image:${BUILD_NUMBER}").remove()
                     docker.image("python-image:${BUILD_NUMBER}").remove()
                 }
