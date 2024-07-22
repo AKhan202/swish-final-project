@@ -1,0 +1,186 @@
+#Namespace, ServiceAccount, ClusterRole, and ClusterRoleBinding
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prometheus
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: prometheus
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: prometheus
+roleRef:
+  kind: ClusterRole
+  name: prometheus
+  apiGroup: rbac.authorization.k8s.io
+
+---
+#  ConfigMap for Prometheus Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-configmap
+  namespace: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: "true"
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: "([^:]+)(?::\\d+)?;(\\d+)"
+            replacement: "$1:$2"
+            target_label: __address__
+          - action: labeldrop
+            regex: __meta_kubernetes_pod_label_(.+)
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            regex: '(container|pod|namespace)_network_(.+)_bytes_(received|sent)$'
+            action: keep
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+
+
+---
+# Deployment and Service 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+      volumes:
+        - name: prometheus-config
+          configMap:
+            name: prometheus-configmap
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: prometheus
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+
+---
+# Prometheus Alerting Rules
+groups:
+  - name: swish-group
+    rules:
+      - alert: HighCPUUsage
+        expr: sum(rate(container_cpu_usage_seconds_total{container!="POD",pod=~".*"}[5m])) by (pod) > 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High CPU usage in pod {{ $labels.pod }}"
+          description: "{{ $labels.pod }} has high CPU usage."
+
+  - name: test-swish
+    rules:
+      - alert: LowCPUUsage
+        expr: 100 * (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) BY (instance)) < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Instance {{ $labels.instance }} has low CPU usage"
+          description: "CPU usage is consistently below 10% for 5 minutes."
+
+
+---
+# Alertmanager Configuration
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'slack-notifications'
+
+receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - send_resolved: true
+        username: 'Alertmanager'
+        channel: '#test-slack-channel'
+        api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK/URL'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']
+
+
+
