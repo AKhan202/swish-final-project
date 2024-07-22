@@ -1,1 +1,20 @@
-# This is python dockerfile 
+# Use an official Python runtime as the base image
+FROM python:3.9
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy requirements.txt (if available)
+COPY requirements.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose any needed ports
+# EXPOSE 8000
+
+# Command to run the application
+CMD ["python", "app.py"]
