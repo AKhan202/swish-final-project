@@ -2,6 +2,44 @@
 <html>
 <head>
     <title>Development Environment Selector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            float: right;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
     <h2>Select Your Development Environment</h2>
@@ -24,30 +62,6 @@
         <button type="button" onclick="submitForm()">Launch Environment</button>
     </form>
 
-    <script>
-        function submitForm() {
-            var form = document.getElementById('environmentForm');
-            var formData = new FormData(form);
-
-            fetch('https://your-jenkins-server/job/your-job-name/build', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Build started:', data);
-                alert('Build started. Check Jenkins for progress.');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error starting build. Please try again.');
-            });
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
