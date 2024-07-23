@@ -3,7 +3,6 @@ pipeline {
         kubernetes {
             // Specifies the Kubernetes cloud and pod configuration
             cloud 'minikube'
-            label 'my-pipeline'
             defaultContainer 'docker'
             yaml """
             apiVersion: v1
