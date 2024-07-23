@@ -1,30 +1,53 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: your-app-deployment
+  name: myapp-deployment
 spec:
-  replicas: 3  # Number of replicas (adjust as needed)
+  replicas: 3
   selector:
     matchLabels:
-      app: your-app
+      app: myapp
   template:
     metadata:
       labels:
-        app: your-app
+        app: myapp
     spec:
       containers:
-        - name: your-app-container
-          image: your-docker-registry/your-app-image:latest  # Replace with your Docker image details
+        - name: nodejs-app
+          image: your-registry/nodejs-app:latest  # Replace with your Docker image
           ports:
-            - containerPort: 3000  # Port that your application listens on
-          env:
-            - name: NODE_ENV  # Example environment variable (adjust as needed)
-              value: production
-            # Add more environment variables as needed
+            - containerPort: 3000
           resources:
-            requests:
-              cpu: "0.5"  # CPU request (adjust as needed)
-              memory: "512Mi"  # Memory request (adjust as needed)
             limits:
-              cpu: "1"  # CPU limit (adjust as needed)
-              memory: "1Gi"  # Memory limit (adjust as needed)
+              cpu: "1"
+              memory: "512Mi"
+            requests:
+              cpu: "0.5"
+              memory: "256Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-app-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: python-app
+  template:
+    metadata:
+      labels:
+        app: python-app
+    spec:
+      containers:
+        - name: python-app
+          image: your-registry/python-app:latest  # Replace with your Docker image
+          ports:
+            - containerPort: 8000
+          resources:
+            limits:
+              cpu: "0.5"
+              memory: "256Mi"
+            requests:
+              cpu: "0.25"
+              memory: "128Mi"
