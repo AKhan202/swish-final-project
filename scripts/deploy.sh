@@ -2,7 +2,7 @@
 
 # Variables
 KUBE_CONFIG="path/to/your/kubeconfig"  # Replace with actual path or use Jenkins/Kubernetes plugin for config
-REGISTRY_URL="your-docker-registry.com"  # Replace with your Docker registry URL
+REGISTRY_URL="https://hub.docker.com/repository/docker/khana88/swish-final-project/general"  # Replace with your Docker registry URL
 BUILD_NUMBER="1"  # Example build number or use dynamically from Jenkins
 
 # Build and push Docker images
