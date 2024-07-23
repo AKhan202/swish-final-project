@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: node1
+spec:
+  taints:
+  - key: team
+    value: team-a
+    effect: NoSchedule
