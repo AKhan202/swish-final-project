@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: myapp-deployment
+  name: swish-nodejs-deployment
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: myapp
+      app: swish-app
   template:
     metadata:
       labels:
-        app: myapp
+        app: swish-app
     spec:
       containers:
         - name: nodejs-app
-          image: your-registry/nodejs-app:latest  # Replace with your Docker image
+          image: swish-nodejs-app:latest  # Replace with your Docker image
           ports:
             - containerPort: 3000
           resources:
@@ -28,7 +28,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: python-app-deployment
+  name: swish-python-deployment
 spec:
   replicas: 2
   selector:
@@ -41,7 +41,7 @@ spec:
     spec:
       containers:
         - name: python-app
-          image: your-registry/python-app:latest  # Replace with your Docker image
+          image: swish-python-app:latest  # Replace with your Docker image
           ports:
             - containerPort: 8000
           resources:
