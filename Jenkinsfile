@@ -31,6 +31,9 @@ pipeline {
                     // Deploy Node.js application
                     sh "kubectl apply -f kubernetes/deployment.yaml --kubeconfig=${KUBE_CONFIG}"
                     sh "kubectl apply -f kubernetes/service.yaml --kubeconfig=${KUBE_CONFIG}"
+                    // Apply node affinity, taints, or other configurations as needed
+                    sh "kubectl apply -f kubernetes/node-affinity.yaml --kubeconfig=${KUBE_CONFIG}"
+                    sh "kubectl apply -f kubernetes/node-taints.yaml --kubeconfig=${KUBE_CONFIG}"
                 }
             }
         }
