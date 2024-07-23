@@ -2,7 +2,7 @@ pipeline {
     agent any
     
      environment {
-        REGISTRY_URL = 'https://hub.docker.com/repository/docker/khana88/swish-final-project/general'  // Replace with your Docker registry URL
+        REGISTRY_URL = 'https://hub.docker.com/repository/docker/khana88/swish-final-project-nodejs/general'  // Replace with your Docker registry URL
         DOCKER_REGISTRY_CREDENTIAL = 'khana'
         KUBE_CONFIG = credentials('swish-final-project')  // Jenkins credentials for Kubernetes config
     }
@@ -12,15 +12,15 @@ pipeline {
             steps {
                 script {
                     // Build and push Node.js image
-                     docker.build("nodejs-image:${BUILD_NUMBER}", "-f Dockerfile.nodejs .")
-                    docker.withRegistry('https://hub.docker.com/repository/docker/khana88/swish-final-project/general', 'khana88') {
-                        docker.image("nodejs-image:${BUILD_NUMBER}").push()
+                     docker.build('swish-final-project-nodejs:latest', "-f Dockerfile.nodejs .")
+                    docker.withRegistry('https://hub.docker.com/repository/docker/khana88/swish-final-project-nodejs/general', 'khana88') {
+                        docker.image('swish-final-project-nodejs:latest').push()
                     }
 
                     // Build and push Python image
-                    docker.build("python-image:${BUILD_NUMBER}", "-f Dockerfile.python .")
-                    docker.withRegistry('https://hub.docker.com/repository/docker/khana88/swish-final-project/general', 'khana88) {
-                        docker.image("python-image:${BUILD_NUMBER}").push()
+                    docker.build('swish-final-project-python:latest', "-f Dockerfile.python .")
+                    docker.withRegistry('https://hub.docker.com/repository/docker/khana88/swish-final-project-python/general', 'khana88) {
+                        docker.image('swish-final-project-python:latest').push()
                     }
                 }
             }
