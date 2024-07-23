@@ -4,38 +4,17 @@ metadata:
   name: node1
 spec:
   taints:
-    - key: special
-      value: dedicated
-      effect: NoSchedule
+  - key: node-type
+    value: backend
+    effect: NoSchedule
+
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Node
 metadata:
-  name: myapp-deployment
+  name: node2
 spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-    spec:
-      containers:
-        - name: nodejs-app
-          image: your-registry/nodejs-app:latest  # Replace with your Docker image
-          ports:
-            - containerPort: 3000
-          resources:
-            limits:
-              cpu: "1"
-              memory: "512Mi"
-            requests:
-              cpu: "0.5"
-              memory: "256Mi"
-      tolerations:
-        - key: "special"
-          operator: "Equal"
-          value: "dedicated"
-          effect: "NoSchedule"
+  taints:
+  - key: node-type
+    value: frontend
+    effect: NoSchedule
