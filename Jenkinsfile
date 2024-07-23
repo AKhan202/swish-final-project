@@ -60,6 +60,15 @@ pipeline {
                     // Apply node affinity, taints, or other configurations as needed
                     sh "kubectl apply -f kubernetes/node-affinity.yaml --kubeconfig=${KUBE_CONFIG}"
                     sh "kubectl apply -f kubernetes/node-taints.yaml --kubeconfig=${KUBE_CONFIG}"
+                    
+                    // Configure SSH access to pods or nodes
+                    sh "kubectl apply -f kubernetes/ssh-config.yaml --kubeconfig=${KUBE_CONFIG}"
+                    
+                    // Update DNS records or configuration (example)
+                    sh "ssh -i ${SSH_KEY} user@hostname 'update-dns-script.sh'"
+
+                    // Example of using SFTP to transfer files
+                    // sh "sftp -i ${SSH_KEY} user@hostname:/remote/path /local/path"
                 }
             }
         }
