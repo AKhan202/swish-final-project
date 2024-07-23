@@ -38,13 +38,13 @@ pipeline {
         stage('Setup Monitoring') {
             steps {
                 script {
-                    // Install Prometheus and Grafana using Helm
+                    // Install Prometheus using Helm
                     sh "helm repo add prometheus-community https://prometheus-community.github.io/helm-charts"
                     sh "helm repo update"
                     sh "helm install prometheus prometheus-community/kube-prometheus-stack --kubeconfig=${KUBE_CONFIG}"
 
-                    // Optionally, configure Grafana dashboards and alerts
-                    // Example: sh "kubectl apply -f grafana-dashboard.yaml --kubeconfig=${KUBE_CONFIG}"
+                    // Apply Prometheus configuration
+                    sh "kubectl apply -f kubernetes/prometheus.yaml --kubeconfig=${KUBE_CONFIG}"
                 }
             }
         }
@@ -53,7 +53,6 @@ pipeline {
             steps {
                 script {
                     // Configure Horizontal Pod Autoscaler (HPA)
-                    // Example HPA YAML definition
                     sh "kubectl apply -f kubernetes/hpa.yaml --kubeconfig=${KUBE_CONFIG}"
                 }
             }
