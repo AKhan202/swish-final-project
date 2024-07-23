@@ -1,16 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nodejs-app
+  name: myapp-deployment
 spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
   template:
+    metadata:
+      labels:
+        app: myapp
     spec:
+      containers:
+        - name: nodejs-app
+          image: your-registry/nodejs-app:latest  # Replace with your Docker image
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+            requests:
+              cpu: "0.5"
+              memory: "256Mi"
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-              - key: team
-                operator: In
-                values:
-                - team-a
+              - matchExpressions:
+                  - key: disk-type
+                    operator: In
+                    values:
+                      - ssd
+                      - fast
