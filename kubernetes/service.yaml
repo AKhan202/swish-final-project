@@ -1,12 +1,25 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: your-app-service
+  name: myapp-service
 spec:
   selector:
-    app: your-app  # Selector to match Pods
+    app: myapp
   ports:
     - protocol: TCP
-      port: 80  # Port exposed externally (adjust as needed)
-      targetPort: 3000  # Port on Pods (must match containerPort in deployment.yaml)
-  type: LoadBalancer  # Type of service (LoadBalancer, NodePort, ClusterIP, etc.)
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-app-service
+spec:
+  selector:
+    app: python-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer
