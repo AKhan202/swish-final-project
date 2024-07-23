@@ -1,11 +1,17 @@
-groups:
-- name: example
-  rules:
-  - alert: HighCPUUsage
-    expr: sum(rate(container_cpu_usage_seconds_total[5m])) / count(kube_pod_container_status_running) > 0.8
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: High CPU usage detected
-      description: CPU usage is above 80% for 5 minutes
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-server-conf
+  labels:
+    app: prometheus
+data:
+  prometheus.yml: |-
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'node-exporter'
+        static_configs:
+          - targets: ['node-exporter:9100']
+      - job_name: 'myapp'
+        static_configs:
+          - targets: ['myapp-service.default.svc:80']
