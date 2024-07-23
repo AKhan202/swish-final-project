@@ -1,36 +1,38 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Pod
 metadata:
-  name: myapp-deployment
+  name: node-affinity
 spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: myapp
-  template:
-    metadata:
-      labels:
-        app: myapp
-    spec:
-      containers:
-        - name: nodejs-app
-          image: your-registry/nodejs-app:latest  # Replace with your Docker image
-          ports:
-            - containerPort: 3000
-          resources:
-            limits:
-              cpu: "1"
-              memory: "512Mi"
-            requests:
-              cpu: "0.5"
-              memory: "256Mi"
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: disk-type
-                    operator: In
-                    values:
-                      - ssd
-                      - fast
+  containers:
+    - name: nodejs-app
+      image: nodejs-image:${BUILD_NUMBER}
+      # Other container specs
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                  - backend
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: node-affinity
+spec:
+  containers:
+    - name: python-app
+      image: python-image:${BUILD_NUMBER}
+      # Other container specs
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                  - frontend
