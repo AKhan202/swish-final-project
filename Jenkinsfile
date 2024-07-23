@@ -1,5 +1,35 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            cloud 'kubernetes'
+            label 'my-pipeline'
+            defaultContainer 'docker'
+            yaml """
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: my-pipeline
+            spec:
+              containers:
+                - name: docker
+                  image: docker:stable
+                  command:
+                    - cat
+                  tty: true
+                - name: kubectl
+                  image: lachlanevenson/k8s-kubectl:v1.20.2
+                  command:
+                    - cat
+                  tty: true
+            """
+        }
+    }
+
+    environment {
+        REGISTRY_URL = 'https://hub.docker.com/repository/docker/khana88/swish-final-project/general'
+        KUBE_CONFIG = credentials('swish-final-project')  // Jenkins credentials for Kubernetes config
+    }
+   
     
      environment {
         REGISTRY_URL = 'https://hub.docker.com/repository/docker/khana88/swish-final-project-nodejs/general'  // Replace with your Docker registry URL
