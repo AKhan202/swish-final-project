@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ssh-pod
+spec:
+  containers:
+  - name: main-container
+    image: your-app-image
+    ports:
+    - containerPort: 80
+  initContainers:
+  - name: ssh-init-container
+    image: alpine
+    command:
+    - sh
+    - -c
+    - apk update && apk add openssh-client
+    volumeMounts:
+    - name: ssh-key
+      mountPath: /root/.ssh/id_rsa  # Mount SSH private key
+    - name: known-hosts
+      mountPath: /root/.ssh/known_hosts  # Mount known_hosts file
+    securityContext:
+      runAsUser: 0  # Ensure init container runs as root for SSH setup
+  volumes:
+  - name: ssh-key
+    secret:
+      secretName: ssh-key-secret  # Replace with your SSH secret name
+  - name: known-hosts
+    configMap:
+      name: known-hosts-configmap  # Replace with your ConfigMap name containing known_hosts
