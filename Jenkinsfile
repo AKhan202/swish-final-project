@@ -2,7 +2,7 @@ pipeline {
     agent {
         kubernetes {
             // Specifies the Kubernetes cloud and pod configuration
-            cloud 'kubernetes'
+            cloud 'minikube'
             label 'my-pipeline'
             defaultContainer 'docker'
             yaml """
