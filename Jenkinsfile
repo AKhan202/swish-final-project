@@ -11,14 +11,14 @@ pipeline {
             steps {
                 script {
                     // Build and push Node.js image
-                    docker.build("nodejs-image:${BUILD_NUMBER}", "-f Dockerfile.nodejs .")
-                    docker.withRegistry(REGISTRY_URL, 'docker-credentials-id') {
+                     docker.build("nodejs-image:${BUILD_NUMBER}", "-f Dockerfile.nodejs .")
+                    docker.withRegistry('https://hub.docker.com/repository/docker/khana88/swish-final-project/general', 'khana88') {
                         docker.image("nodejs-image:${BUILD_NUMBER}").push()
                     }
 
                     // Build and push Python image
                     docker.build("python-image:${BUILD_NUMBER}", "-f Dockerfile.python .")
-                    docker.withRegistry(REGISTRY_URL, 'docker-credentials-id') {
+                    docker.withRegistry('https://hub.docker.com/repository/docker/khana88/swish-final-project/general', 'khana88) {
                         docker.image("python-image:${BUILD_NUMBER}").push()
                     }
                 }
