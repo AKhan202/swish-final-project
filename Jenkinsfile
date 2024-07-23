@@ -1,8 +1,9 @@
 pipeline {
     agent any
-
-    environment {
+    
+     environment {
         REGISTRY_URL = 'https://hub.docker.com/repository/docker/khana88/swish-final-project/general'  // Replace with your Docker registry URL
+        DOCKER_REGISTRY_CREDENTIAL = 'khana'
         KUBE_CONFIG = credentials('kubeconfig')  // Jenkins credentials for Kubernetes config
     }
 
