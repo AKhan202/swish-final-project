@@ -1,23 +1,18 @@
-# Use an official Node.js runtime as the base image
+# Dockerfile.nodejs
+
+# Use a base image that includes Node.js
 FROM node:14
 
-# Set the working directory in the container
-WORKDIR /app
+# Install SSH server
+RUN apt-get update && apt-get install -y openssh-server
 
-# Copy package.json and package-lock.json (if available)
-COPY package*.json ./
+# Configure SSH server (for demonstration purposes, you might want to customize security settings)
+RUN mkdir /var/run/sshd
+RUN echo 'root:password' | chpasswd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-# Install npm dependencies
-RUN npm install
+# Expose SSH port
+EXPOSE 22
 
-# Copy the rest of the application code
-COPY . .
-
-# Expose the port that the app runs on
-EXPOSE 3000
-
-# Define environment variable (if needed)
-ENV NODE_ENV=production
-
-# Command to run the application
-CMD ["npm", "start"]
+# Start SSH server
+CMD ["/usr/sbin/sshd", "-D"]
