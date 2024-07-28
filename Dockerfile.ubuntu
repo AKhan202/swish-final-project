@@ -1,0 +1,26 @@
+# Base image
+FROM ubuntu:latest
+
+# Install necessary packages
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    python3 \
+    nodejs \
+    npm \
+    gcc \
+    openssh-server \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up SSH
+RUN mkdir /var/run/sshd
+
+# Add SSH user
+RUN id -u ubuntu &>/dev/null || useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 ubuntu && \
+    echo 'ubuntu:test' | chpasswd
+
+# Expose SSH port
+EXPOSE 22
+
+# Command to run SSH server and keep the container running
+CMD ["/usr/sbin/sshd", "-D"]

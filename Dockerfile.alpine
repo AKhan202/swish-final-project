@@ -1,0 +1,48 @@
+# Stage 1: Build environment
+FROM alpine:latest AS builder
+
+# Install necessary build tools
+RUN apk update && \
+    apk add --no-cache \
+        curl \
+        git
+
+# Stage 2: Runtime environment
+FROM alpine:latest
+
+# Install necessary runtime packages and SSH server
+RUN apk update && \
+    apk add --no-cache \
+        bash \
+        openssl \
+        openssh-server \
+        netcat-openbsd \
+        && rm -rf /var/cache/apk/*
+
+# Copy built artifacts from builder stage
+COPY --from=builder /usr/bin/curl /usr/bin/git /usr/bin/
+
+# Set up SSH server
+RUN mkdir /var/run/sshd
+
+# Generate SSH host keys
+RUN ssh-keygen -A
+
+# Example: Add SSH user
+RUN adduser -D -s /bin/bash -u 1000 ubuntu && \
+    echo 'ubuntu:test' | chpasswd
+
+# Create the /www directory
+RUN mkdir -p /www
+
+# Simple HTTP server
+RUN echo -e "HTTP/1.1 200 OK\nContent-Length: 13\n\nHello, world!" > /www/index.html
+
+# Expose SSH port
+EXPOSE 22
+
+# Expose HTTP port
+EXPOSE 80
+
+# Start SSH server and keep container running
+CMD ["/usr/sbin/sshd", "-D"]

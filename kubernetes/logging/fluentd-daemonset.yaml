@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+  namespace: dev-environments
+data:
+  fluent.conf: |
+    <source>
+      @type forward
+      port 24224
+    </source>
+    <match **>
+      @type elasticsearch
+      host elasticsearch.logging.svc.cluster.local
+      port 9200
+      logstash_format true
+      flush_interval 10s
+    </match>
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: dev-environments
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      containers:
+        - name: fluentd
+          image: fluent/fluentd:v1.11
+          volumeMounts:
+            - name: fluentd-config
+              mountPath: /fluentd/etc
+              subPath: fluent.conf
+          resources:
+            limits:
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+      volumes:
+        - name: fluentd-config
+          configMap:
+            name: fluentd-config

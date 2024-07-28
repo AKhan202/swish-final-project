@@ -1,7 +1,6 @@
 pipeline {
     agent {
-        kubernetes {
-            // Specifies the Kubernetes cloud and pod configuration
+         kubernetes {
             cloud 'minikube'
             defaultContainer 'docker'
             yaml """
@@ -26,27 +25,75 @@ pipeline {
     }
 
     environment {
-        // Environment variables for Docker registry and Kubernetes config
-        REGISTRY_URL_NODEJS = 'https://hub.docker.com/repository/docker/khana88/swish-final-project-nodejs/general'
-        REGISTRY_URL_PYTHON = 'https://hub.docker.com/repository/docker/khana88/swish-final-project-python/general'
-        KUBE_CONFIG = credentials('swish-final-project')  // Jenkins credentials for Kubernetes config
+        HELM_HOME = '/usr/local/bin/helm'
+        KUBE_NAMESPACE = 'dev-environments'
+        REGISTRY_URL = 'https://hub.docker.com/repositories/khana88'
+        KUBE_CONFIG = credentials('swish-final-project')  
+    }
+
+    parameters {
+        choice(name: 'BASE_IMAGE', choices: ['Alpine', 'Ubuntu'], description: 'Base image to use')
+        string(name: 'MEMORY', defaultValue: '2Gi', description: 'Memory request for the container')
+        string(name: 'CPU', defaultValue: '1', description: 'CPU request for the container')
     }
 
     stages {
-        stage('Build and Push Docker Images') {
+        stage('Checkout') {
+            steps {
+                git 'https://my-workspace21-admin@bitbucket.org/my-workspace21/swish-final-project.git'
+            }
+        }
+
+        stage('Build Docker Image') {
             steps {
                 script {
-                    // Build and push Node.js image
-                    docker.build('swish-final-project-nodejs:latest', "-f Dockerfile.nodejs .")
-                    docker.withRegistry(REGISTRY_URL_NODEJS, 'khana88') {
-                        docker.image('swish-final-project-nodejs:latest').push()
+                    def dockerfile = ""
+                    def imageTag = ""
+                    if (params.BASE_IMAGE == 'Alpine') {
+                        dockerfile = 'docker/Dockerfile.alpine'
+                        imageTag = 'swish-final-project-alpine'
+                        sh "docker build -t khana88/swish-final-project-alpine:latest -f ${dockerfile} ."
+                    } else if (params.BASE_IMAGE == 'Ubuntu') {
+                        dockerfile = 'docker/Dockerfile.ubuntu'
+                        imageTag = 'swish-final-project-ubuntu'
+                        sh "docker build -t khana88/swish-final-project-ubuntu:latest -f ${dockerfile} ."
                     }
 
-                    // Build and push Python image
-                    docker.build('swish-final-project-python:latest', "-f Dockerfile.python .")
-                    docker.withRegistry(REGISTRY_URL_PYTHON, 'khana88') {
-                        docker.image('swish-final-project-python:latest').push()
+                    
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    def imageTag = ""
+                    if (params.BASE_IMAGE == 'Alpine') {
+                        imageTag = 'swish-final-project-alpine'
+                        sh "docker push khana88/swish-final-project-alpine:latest"
+                    } else if (params.BASE_IMAGE == 'Ubuntu') {
+                        imageTag = 'swish-final-project-ubuntu'
+                        sh "docker push khana88/swish-final-project-ubuntu:latest"
                     }
+
+                    
+                }
+            }
+        }
+
+        stage('Package Helm Chart') {
+            steps {
+                script {
+                    sh "helm package helm/dev-environment swish-final-project\helm\dev-environment" 
+                }   
+            }
+        }
+
+        stage('Deploy Monitoring') {
+            steps {
+                script {
+                    sh "helm upgrade --install prometheus helm/prometheus --namespace dev-environments --values helm/prometheus/values.yaml"
+                    sh "helm upgrade --install grafana helm/grafana --namespace dev-environments --values helm/grafana/values.yaml"
                 }
             }
         }
@@ -54,74 +101,31 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // Deploy Node.js application
-                    sh "kubectl apply -f kubernetes/deployment.yaml --kubeconfig=${KUBE_CONFIG}"
-                    sh "kubectl apply -f kubernetes/service.yaml --kubeconfig=${KUBE_CONFIG}"
-                    // Apply node affinity, taints, or other configurations as needed
-                    sh "kubectl apply -f kubernetes/node-affinity.yaml --kubeconfig=${KUBE_CONFIG}"
-                    sh "kubectl apply -f kubernetes/node-taints.yaml --kubeconfig=${KUBE_CONFIG}"
-                    
-                    // Configure SSH access to pods or nodes
-                    sh "kubectl apply -f kubernetes/ssh-config.yaml --kubeconfig=${KUBE_CONFIG}"
-                    
-                    // Update DNS records or configuration (example)
-                    sh "ssh -i ${SSH_KEY} user@hostname 'update-dns-script.sh'"
-
-                    // Example of using SFTP to transfer files
-                    // sh "sftp -i ${SSH_KEY} user@hostname:/remote/path /local/path"
+                    sh """
+                    helm upgrade --install dev-environment helm/dev-environment \
+                      --namespace dev-environments \
+                      --set image.repository=docker.io/khana88/swish-final-project-alpine/latest \
+                      --set image.tag=latest \
+                      --set resources.requests.memory="512Mi" \
+                      --set resources.requests.cpu="250m" \
+                      --values helm/dev-environment/values.yaml
+                    """
                 }
             }
         }
 
-        stage('Setup Monitoring') {
+        stage('Verify Deployment') {
             steps {
                 script {
-                    // Install Prometheus using Helm
-                    sh "helm repo add prometheus-community https://prometheus-community.github.io/helm-charts"
-                    sh "helm repo update"
-                    sh "helm install prometheus prometheus-community/kube-prometheus-stack --kubeconfig=${KUBE_CONFIG}"
-
-                    // Apply Prometheus configuration
-                    sh "kubectl apply -f kubernetes/prometheus.yaml --kubeconfig=${KUBE_CONFIG}"
-                }
-            }
-        }
-
-        stage('Configure Autoscaling') {
-            steps {
-                script {
-                    // Configure Horizontal Pod Autoscaler (HPA)
-                    sh "kubectl apply -f kubernetes/hpa.yaml --kubeconfig=${KUBE_CONFIG}"
-                }
-            }
-        }
-
-        stage('Deploy UI Changes') {
-            steps {
-                // Example: Copy UI files to web server directory (if needed)
-                sh "cp -r ui/* /var/www/html"
-            }
-        }
-
-        stage('Cleanup') {
-            steps {
-                script {
-                    // Clean up old Docker images or other resources if necessary
-                    docker.image("swish-final-project-nodejs:latest").remove()
-                    docker.image("swish-final-project-python:latest").remove()
+                    sh "kubectl get pods --namespace=dev-environments"
                 }
             }
         }
     }
 
     post {
-        success {
-            echo 'Deployment successful!'
-            // Optionally, trigger notifications or further actions upon successful deployment
-        }
-        failure {
-            echo 'Deployment failed!'
-            // Optionally, trigger notifications or rollback actions upon deployment failure
+        always {
+            cleanWs()
         }
     }
 }

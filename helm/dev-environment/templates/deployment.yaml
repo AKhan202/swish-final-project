@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-environment
+  namespace: dev-environments
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dev-environment
+  template:
+    metadata:
+      labels:
+        app: dev-environment
+    spec:
+      containers:
+        - name: dev-environment
+          image: khana88/swish-final-project-alpine:latest
+          ports:
+            - containerPort: 8080  # Expose port 8080 for clarity, though it's not used
+          env:
+            - name: PACKAGES_LIST
+              value: curl,git
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -x
+              echo "Container is running..."
+              while true; do sleep 3600; done
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - "echo 'Container is alive'"  # Simple check that the container is running
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - "echo 'Container is ready'"  # Simple check that the container is ready
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

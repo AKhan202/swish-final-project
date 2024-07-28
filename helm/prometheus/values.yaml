@@ -1,0 +1,8 @@
+prometheus:
+  image:
+    repository: prometheus/prometheus
+    tag: v2.28.1
+  service:
+    type: ClusterIP
+    port: 9090
+  resources: {}

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ubuntu-packages-config
+  namespace: dev-environments
+data:
+  packages: |
+    python3
+    nodejs
+    npm
+    gcc

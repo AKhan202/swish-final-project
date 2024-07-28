@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuntu-app
+  namespace: dev-environments
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuntu-app
+  template:
+    metadata:
+      labels:
+        app: ubuntu-app
+    spec:
+      containers:
+        - name: ubuntu-container
+          image: khana88/swish-final-project-ubuntu:latest
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "250m"
+          env:
+            - name: SOME_ENV_VAR
+              value: "some-value"
+          ports:
+            - containerPort: 22  # Expose port 22 for SSH
+          livenessProbe:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - "nc -z localhost 22"  # Check if SSH is running
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - "nc -z localhost 22"  # Check if SSH is running
+            initialDelaySeconds: 30
+            periodSeconds: 10

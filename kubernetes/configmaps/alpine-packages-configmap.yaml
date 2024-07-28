@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alpine-packages-config
+  namespace: dev-environments
+data:
+  packages: |
+    bash
+    curl
+    openssl
+    git

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssh-service
+  namespace: dev-environments
+spec:
+  selector:
+    app: alpine-app  # Change to ubuntu-app for Ubuntu deployment
+  ports:
+    - protocol: TCP
+      port: 22
+      targetPort: 22
+  type: LoadBalancer  # Or use NodePort if LoadBalancer is not available

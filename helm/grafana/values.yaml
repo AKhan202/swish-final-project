@@ -1,0 +1,8 @@
+grafana:
+  image:
+    repository: grafana/grafana
+    tag: 8.0.6
+  service:
+    type: ClusterIP
+    port: 3000
+  resources: {}

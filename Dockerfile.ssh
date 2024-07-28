@@ -1,0 +1,17 @@
+# Example Dockerfile for SSH server
+FROM ubuntu:20.04
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    openssh-server \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir /var/run/sshd
+
+# Example: Add SSH user
+RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 ubuntu && \
+    echo 'ubuntu:test' | chpasswd
+
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]

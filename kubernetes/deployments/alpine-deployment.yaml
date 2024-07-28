@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpine-ssh-app
+  namespace: dev-environments
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alpine-ssh-app
+  template:
+    metadata:
+      labels:
+        app: alpine-ssh-app
+    spec:
+      containers:
+        - name: alpine-ssh-container
+          image: khana88/swish-final-project-alpine:latest
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "250m"
+          ports:
+            - containerPort: 22  # Expose port 22 for SSH
+          livenessProbe:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - "nc -z localhost 22"  # Check if SSH is running
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          readinessProbe:
+            exec:
+              command:
+                - "sh"
+                - "-c"
+                - "nc -z localhost 22"  # Check if SSH is running
+            initialDelaySeconds: 60
+            periodSeconds: 20
