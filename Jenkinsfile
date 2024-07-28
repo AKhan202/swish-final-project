@@ -9,6 +9,7 @@ pipeline {
             metadata:
               name: my-pipeline
             spec:
+              restartPolicy: Always
               containers:
                 - name: docker
                   image: docker:stable
