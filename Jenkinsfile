@@ -84,7 +84,7 @@ pipeline {
         stage('Package Helm Chart') {
             steps {
                 script {
-                    sh "helm package helm/dev-environment swish-final-project\helm\dev-environment" 
+                    sh "helm package helm/dev-environment swish-final-project/helm/dev-environment"
                 }   
             }
         }
