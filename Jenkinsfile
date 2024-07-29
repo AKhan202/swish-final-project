@@ -1,6 +1,6 @@
 pipeline {
     agent {
-         kubernetes {
+        kubernetes {
             cloud 'minikube'
             defaultContainer 'docker'
             yaml """
@@ -8,19 +8,28 @@ pipeline {
             kind: Pod
             metadata:
               name: my-pipeline
+              labels:
+                app: my-pipeline
             spec:
-              restartPolicy: Always
+              restartPolicy: Never
               containers:
                 - name: docker
                   image: docker:stable
                   command:
                     - cat
                   tty: true
+                  volumeMounts:
+                    - name: docker-socket
+                      mountPath: /var/run/docker.sock
                 - name: kubectl
                   image: lachlanevenson/k8s-kubectl:v1.20.2
                   command:
                     - cat
                   tty: true
+              volumes:
+                - name: docker-socket
+                  hostPath:
+                    path: /var/run/docker.sock
             """
         }
     }
@@ -59,8 +68,6 @@ pipeline {
                         imageTag = 'swish-final-project-ubuntu'
                         sh "docker build -t khana88/swish-final-project-ubuntu:latest -f ${dockerfile} ."
                     }
-
-                    
                 }
             }
         }
@@ -76,8 +83,6 @@ pipeline {
                         imageTag = 'swish-final-project-ubuntu'
                         sh "docker push khana88/swish-final-project-ubuntu:latest"
                     }
-
-                    
                 }
             }
         }
