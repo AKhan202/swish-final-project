@@ -1,13 +1,13 @@
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: alpine-app-hpa
+  name: ubuntu-app-hpa
   namespace: dev-environments
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: alpine-app  # Change to ubuntu-app for Ubuntu deployment
+    name: ubuntu-app
   minReplicas: 1
   maxReplicas: 10
   targetCPUUtilizationPercentage: 50

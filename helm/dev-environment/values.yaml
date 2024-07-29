@@ -42,19 +42,26 @@ podSecurityContext: {}
 securityContext: {}
 
 service:
+  name: ssh-service
   type: LoadBalancer
   port: 8080
 
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  name: app-ingress
+  className: "nginx"
   annotations: {}
   hosts:
-    - host: chart-example.local
+    - host: alpine.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+    - host: ubuntu.example.com
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls: []
+
 
 resources:
   requests:
@@ -83,7 +90,7 @@ readinessProbe:
   failureThreshold: 3
 
 autoscaling:
-  enabled: false
+  enabled: true
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
@@ -99,3 +106,4 @@ ssh:
     -----BEGIN RSA PRIVATE KEY-----
     ... (your private key here) ...
     -----END RSA PRIVATE KEY-----
+
