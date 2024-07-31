@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: resource-alerts
+  namespace: dev-environments
+spec:
+  groups:
+  - name: resource-alerts
+    rules:
+    - alert: IdleCPUUsage
+      expr: sum(rate(container_cpu_usage_seconds_total{namespace="dev-environments"}[5m])) by (pod) < 0.01
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Idle CPU usage detected on pod {{ $labels.pod }}"
+        description: "CPU usage is below 1% for the last 10 minutes on pod {{ $labels.pod }}."
+
+    - alert: IdleMemoryUsage
+      expr: sum(container_memory_usage_bytes{namespace="dev-environments"}) by (pod) < 1000000
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Idle memory usage detected on pod {{ $labels.pod }}"
+        description: "Memory usage is below 1MB for the last 10 minutes on pod {{ $labels.pod }}."
